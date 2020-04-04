@@ -72,4 +72,4 @@ if __name__ == '__main__':
     file_handler = logging.FileHandler('submission.log')
     app.logger.addHandler(file_handler)
 
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=80, debug=True)
