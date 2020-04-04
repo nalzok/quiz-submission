@@ -1,9 +1,10 @@
 import binascii
 from datetime import datetime
-import os
-import re
-import pathlib
 from flask import Flask, render_template, flash, request, redirect, url_for
+import logging
+import os
+import pathlib
+import re
 from werkzeug.utils import secure_filename
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -49,13 +50,17 @@ def handle_form():
             sid
         )
 
+        # save file to local file system
         pathlib.Path(personal_folder).mkdir(parents=True, exist_ok=True)
         filename = secure_filename(file.filename)
         file.save(os.path.join(personal_folder, filename))
 
+        # calculate CRC32 checksum
         file.seek(0)
         checksum = binascii.crc32(file.read())
 
+        # logging
+        app.logger.info(f'Student [[{sid}]] submitted [[{filename}]] at [[{datetime.now()}]], CRC32 [[{checksum & 0xFFFFFFFF:#010X}]]')
         flash(f'CRC32({filename[:20] + (filename[20:] and "[...]")}) = {checksum & 0xFFFFFFFF:#010X}.')
 
         return redirect(url_for('handle_form'))
@@ -64,4 +69,7 @@ def handle_form():
 
 
 if __name__ == '__main__':
+    file_handler = logging.FileHandler('submission.log')
+    app.logger.addHandler(file_handler)
+
     app.run(debug=True)
