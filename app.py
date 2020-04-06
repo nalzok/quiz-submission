@@ -17,6 +17,9 @@ app.config.update(
     MAX_CONTENT_LENGTH=16 * 1024 * 1024    # set maximum file size to 16 MiB
 )
 
+file_handler = logging.FileHandler('submission.log')
+app.logger.addHandler(file_handler)
+
 sid_validator = re.compile('^[0-9]{11}$', re.ASCII)
 
 
@@ -57,11 +60,11 @@ def handle_form():
 
         # calculate CRC32 checksum
         file.seek(0)
-        checksum = binascii.crc32(file.read())
+        checksum = binascii.crc32(file.read()) & 0xFFFFFFFF
 
         # logging
-        app.logger.info(f'Student [[{sid}]] submitted [[{filename}]] at [[{datetime.now()}]], CRC32 [[{checksum & 0xFFFFFFFF:#010X}]]')
-        flash(f'CRC32({filename[:20] + (filename[20:] and "[...]")}) = {checksum & 0xFFFFFFFF:#010X}.')
+        app.logger.info(f'Student [[{sid}]] submitted [[{filename}]] at [[{datetime.now()}]], CRC32 [[{checksum:#010X}]]')
+        flash(f'CRC32({filename[:20] + (filename[20:] and "[...]")}) = {checksum :#010X}.')
 
         return redirect(url_for('handle_form'))
 
@@ -69,7 +72,4 @@ def handle_form():
 
 
 if __name__ == '__main__':
-    file_handler = logging.FileHandler('submission.log')
-    app.logger.addHandler(file_handler)
-
     app.run(host='0.0.0.0', port=80, debug=True)
